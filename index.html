@@ -1,0 +1,246 @@
+<!DOCTYPEhtml>
+<head>
+<title>Drag & Drop Option</title>
+</head>
+<body>
+<div style="height:20vh"></div>
+<div style="width:100%; display:flex;flex-direction:row">
+  <div style="width:20%;"></div>
+
+  <div class="container" style="width:50%" id="dragarea" onmousemove="onMouseMove(event)">
+    <div id="dropArea">
+      <ul id="drop-list">
+      </ul>
+    </div>
+    <ul id="drag-list" draggable="false">
+      <li onmousedown="onClick(event)" draggable="false"> Item 1</li>
+      <li onmousedown="onClick(event)" draggable="false"> Item 2</li>
+      <li onmousedown="onClick(event)" draggable="false"> Item 3</li>
+      <li onmousedown="onClick(event)" draggable="false"> Item 4</li>
+    </ul>
+  </div>
+</div>
+
+<style>
+.container{
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+
+.container > div{
+  width: 80%;
+  border: 1px solid lightgray;
+  height: 40vh;
+}
+
+#drag-list{
+ list-style: none;
+   width: 20%;
+   padding: 0;
+   margin-top: 0;
+}
+
+#drag-list > li{
+  width: 100%;
+  margin: 6px;
+  text-align: center;
+  background-color: white;
+  height: 4vh;
+  box-shadow: 1px 1px 1px 1px rgba(0,0,0,.3);
+  position: relative;
+  border-radius: .1vw;
+}
+
+
+#drop-list{
+   list-style: none;
+   width: 100%;
+   padding: 0;
+   margin-top: 0;
+   display: flex;
+   flex-wrap: wrap;
+}
+
+#drop-list > li{
+   width: 20%;
+  margin: 6px;
+  text-align: center;
+  background-color: white;
+  height: 4vh;
+  box-shadow: 1px 1px 1px 1px rgba(0,0,0,.3);
+  position: relative;
+  border-radius: .1vw;
+}
+
+
+
+
+
+#drag-list > li:hover{
+  cursor: grab;
+}
+
+
+.dragging{
+  cursor: grabbing;
+  background-color: white;
+  list-style: none;
+  text-align: center;
+  box-shadow: 1px 1px 5px 3px rgba(0,0,0,0.3);
+
+}
+
+
+.can-drop{
+  background-color: white !important;
+  border: 1px dashed lightgray !important;
+}
+</style>
+
+</body>
+<script>
+var elementDraging;
+
+var cursorPosY;
+var cursorPosX;
+
+var isInDragArea;
+
+var direction = 'LEFT' | 'RIGHT';
+var index;
+
+
+addEventListener('mouseup', (event) => {
+  onMouseUp();
+});
+
+
+function onMouseUp() {
+  if (this.isInDragArea) {
+    document.getElementById('drop-list').appendChild(this.elementDraging);
+  } else {
+    setOldPosition();
+  }
+  this.ressetElementDrag();
+
+}
+
+function onClick(event) {
+  console.log('clicked')
+  for (let i = 0; i < document.getElementById('drag-list').children.length; i++) {
+
+    if (document.getElementById('drag-list').children[i].innerHTML == event.target.innerHTML) {
+      this.index = i
+    }
+  }
+
+  this.elementDraging = event.target;
+
+  this.cursorPosX = event.pageX;
+  this.cursorPosY = event.pageY;
+
+  let offsetWidth = event.target.offsetWidth;
+  let offsetHeight = event.target.offsetHeight;
+
+
+  this.elementDraging.style.top = event.pageY + "px";
+  this.elementDraging.style.width = offsetWidth + "px";
+  this.elementDraging.style.height = offsetHeight + "px";
+  this.elementDraging.style.position = "absolute";
+
+  this.elementDraging.classList.add('dragging');
+  setPosition(event)
+}
+
+
+function onMouseMove(event) {
+  this.direction = ((this.cursorPosY - event.clientX) > 0 ? 'LEFT' : 'RIGHT');
+  this.cursorPosX = event.pageX;
+  this.cursorPosY = event.pageY;
+
+  if (elementDraging != null) {
+    console.log("CLICK POINT: ", event)
+    let dropArea = document.getElementById("dropArea");
+    let leftDropArea = dropArea.offsetLeft;
+    let topDropArea = dropArea.offsetTop;
+    let rightDropArea = dropArea.offsetLeft + dropArea.offsetWidth;
+    let bottomDropArea = dropArea.offsetTop + dropArea.offsetHeight;
+
+
+
+    let posElementDrag = {
+      left: elementDraging.offsetLeft,
+      right: (elementDraging.offsetLeft + Number(elementDraging.style.width.replace("px", ""))),
+      top: elementDraging.offsetTop,
+      bottom: (elementDraging.offsetTop + Number(elementDraging.style.height.replace("px", "")))
+    }
+
+    console.log("ELE", posElementDrag)
+    console.log("DROP-R", rightDropArea)
+    console.log("DROP-L", leftDropArea)
+    console.log("DROP-T", topDropArea)
+    console.log("DROP-B", bottomDropArea)
+
+    if (
+      (posElementDrag.right <= rightDropArea) &&
+      (posElementDrag.left >= leftDropArea) &&
+      (posElementDrag.top >= topDropArea) &&
+      (posElementDrag.bottom <= bottomDropArea)
+    ) {
+      this.isInDragArea = true;
+      dropArea.classList.add("can-drop");
+    } else {
+      this.isInDragArea = false;
+      dropArea.classList.remove("can-drop");
+    }
+
+    setPosition(event);
+  } else {
+    dropArea.classList.remove("can-drop");
+  }
+}
+
+
+function setPosition(event) {
+  elementDraging.style.left = ((cursorPosX)
+    - Number((elementDraging.style.width.replace("px", "")) / 2)) + "px";
+  elementDraging.style.top = (cursorPosY - Number((elementDraging.style.height.replace("px", "")) / 2)) + "px";
+
+  document.getElementById('dragarea').appendChild(this.elementDraging);
+}
+
+
+
+function ressetElementDrag() {
+  if (this.elementDraging != null) {
+    this.elementDraging.style.position = "";
+    this.elementDraging.id = "";
+    this.elementDraging.style.height = "";
+    this.elementDraging.style.width = "";
+    this.elementDraging.style.left = "";
+    this.elementDraging.style.top = "";
+    this.elementDraging.classList.remove("dragging");
+    this.elementDraging = null;
+  }
+}
+
+function setOldPosition() {
+  if (this.index != document.getElementById('drag-list').children.length)
+    document.getElementById('drag-list')
+      .insertBefore(this.elementDraging, document.getElementById('drag-list').children[this.index]);
+  else
+    document.getElementById('drag-list').appendChild(this.elementDraging);
+}
+
+
+
+
+
+
+
+
+</script>
+
+<html>
